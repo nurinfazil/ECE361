@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <netdb.h>  
 #include <arpa/inet.h>
+#include "packet.h"
 
 int main(int argc, char **argv){
 	

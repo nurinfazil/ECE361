@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <time.h>
+#include "packet.h"
 
 int main(int argc, char **argv){
 
