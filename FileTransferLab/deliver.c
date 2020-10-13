@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <time.h>
 
 int main(int argc, char **argv){
 
@@ -42,6 +43,10 @@ int main(int argc, char **argv){
         exit(1);
     }
     
+	// Start time here
+	clock_t startTime, endTime; 
+	startTime = clock();
+	
     const char ftp[100] = "ftp";
     if ( access(argv[4], F_OK) == 0 ) {
         
@@ -73,7 +78,9 @@ int main(int argc, char **argv){
     buff[recv] = '\0';
 
     if (strcmp(buff, "yes") == 0 ) {
-        
+		// Stop time and print time here
+        endTime = clock(); 
+		printf("RTT = %f sec.\n", ((double) (endTime - startTime) / CLOCKS_PER_SEC));  
         printf("A file transfer can start.\n");
     }
     else {
