@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <netdb.h>  
 #include <arpa/inet.h>
+#include <stdbool.h>
 #include "packet.h"
 
 int main(int argc, char **argv){
@@ -46,7 +47,7 @@ int main(int argc, char **argv){
 		
 	
 	// Receive message from client 
-	char buff[100];
+	char buff[BUFFER_SIZE];
 	socklen_t clientsize = sizeof(struct sockaddr_storage);
 	
 	int recv = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&clientaddr, &clientsize);
@@ -74,6 +75,27 @@ int main(int argc, char **argv){
 			printf("Sending No Confirmation Message Error\n"); 
 			exit(1);
 		}	
+	}
+	
+	
+	// Start receiving from client
+	Packet packet; 
+	packet.filename = (char *) malloc(BUFFER_SIZE);
+	char filename[BUFFER_SIZE] = {0};
+	FILE *file_ptr = NULL;
+	//bool isFragmentRecv[]={0};
+	
+	while (1){
+//		int recv_ret = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&clientaddr, &clientsize);
+//		if (recv_ret < 0){
+//			printf("Receving error\n");
+//			exit(1);
+//		}
+//		stringToPacket(buff, &packet);
+		
+		// Follow is for testing. The 6 lines commented above are the actual code
+		char *test = "3:2:10:foobar.text:lo World!\n";
+		stringToPacket(test, &packet);
 	}
 	
 		

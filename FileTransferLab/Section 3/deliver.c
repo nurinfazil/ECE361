@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 	clock_t startTime, endTime; 
 	startTime = clock();
 	
-    const char ftp[100] = "ftp";
+    const char ftp[BUFFER_SIZE] = "ftp";
     if ( access(argv[4], F_OK) == 0 ) {
         
         int send = sendto(socketFD, ftp, sizeof(ftp), 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);  
@@ -66,7 +66,7 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    char buff[100] = "\0";
+    char buff[BUFFER_SIZE] = "\0";
     socklen_t serversize = sizeof(serverinfo);
 
     int recv = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&serverinfo, &serversize );
@@ -85,9 +85,11 @@ int main(int argc, char **argv){
         printf("A file transfer can start.\n");
     }
     else {
+		printf("Connection for file transfer failed.\n");
         exit(1);
     }
-
+	
+	
 
     // Close socket file descriptor 
 	int closeFD = close(socketFD); 
