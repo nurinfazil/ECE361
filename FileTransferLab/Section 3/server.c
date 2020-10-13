@@ -94,7 +94,7 @@ int main(int argc, char **argv){
 //		stringToPacket(buff, &packet);
 		
 		// Follow is for testing. The 6 lines commented above are the actual code
-		char *test = "3:2:10:foobar.text:lo World!\n";
+		char *test = "3:2:10:foobar.txt:lo World!\n";
 		stringToPacket(test, &packet);
 	}
 	
