@@ -83,19 +83,58 @@ int main(int argc, char **argv){
 	packet.filename = (char *) malloc(BUFFER_SIZE);
 	char filename[BUFFER_SIZE] = {0};
 	FILE *file_ptr = NULL;
-	//bool isFragmentRecv[]={0};
+	bool *isFragmentRecv= NULL;
 	
 	while (1){
-//		int recv_ret = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&clientaddr, &clientsize);
-//		if (recv_ret < 0){
-//			printf("Receving error\n");
-//			exit(1);
-//		}
-//		stringToPacket(buff, &packet);
+		int recv_ret = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&clientaddr, &clientsize);
+		if (recv_ret < 0){
+			printf("Receving error\n");
+			exit(1);
+		}
 		
-		// Follow is for testing. The 6 lines commented above are the actual code
-		char *test = "3:2:10:foobar.txt:lo World!\n";
-		stringToPacket(test, &packet);
+		stringToPacket(buff, &packet);
+		
+		// If there exists no file with filename, open a new file and initialize data structure to check 
+		// if files are being recieved
+		if(file_ptr == NULL){
+			strcpy(filename, packet.filename);
+			file_ptr = fopen(filename, "w");
+			isFragmentRecv = (bool *)malloc(packet.total_frag * sizeof (isFragmentRecv));
+			for (int i = 0; i < packet.total_frag; i++){
+					isFragmentRecv[i] = false;			
+			}
+		}
+		// Copy data into the new file
+		if (isFragmentRecv[packet.frag_no] == false){
+			int ret = fwrite(packet.filedata, sizeof(char), packet.size, file_ptr);
+			if (ret != packet.size){
+				printf("writing error\n");
+				exit(1);
+			}
+			isFragmentRecv[packet.frag_no] = true;
+		}
+		
+		// Set up acknowledgment to send back to client 
+		strcpy(packet.filedata, "ACK");
+		
+		// Following is for testing. The 6 lines commented above are the actual code
+//		char *test = "3:2:10:foobar.txt:lo World!\n";
+//		stringToPacket(test, &packet);
+
+		packetToString(buff, &packet);
+		
+		int send = sendto(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&clientaddr, sizeof(clientaddr)); 
+		if (send < 0){
+			printf("Sending No Confirmation Message Error\n"); 
+			exit(1);
+		}
+		
+		// If at the last fragment, break out of while loop
+		if (packet.frag_no == packet.total_frag){
+			printf("File transfer completed!\n");
+			break;
+		}
+		
 	}
 	
 		
@@ -104,6 +143,12 @@ int main(int argc, char **argv){
 	int closeFD = close(socketFD); 
 	if (closeFD < 0){
 		printf("Closing Socket Error\n"); 
+		exit(1);
+	}
+	
+	int closeFile = fclose(file_ptr);
+	if (closeFile < 0){
+		printf("Closing File Error\n"); 
 		exit(1);
 	}
 	

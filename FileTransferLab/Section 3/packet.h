@@ -14,8 +14,33 @@ typedef struct Packets {
 #define BUFFER_SIZE 1200
 #define DATA_SIZE 1000
 
+// Given a packet, create a string and puts it in buf
 void packetToString(char *buf, Packet *packet){
+	memset(buf, 0, BUFFER_SIZE); 
 	
+	int cursor = 0; 
+	
+	sprintf(buf, "%d", packet -> total_frag);
+    cursor = strlen(buf);
+    memcpy(buf + cursor, ":", sizeof(char));
+    ++cursor;	
+	
+	sprintf(buf + cursor, "%d", packet -> frag_no);
+    cursor = strlen(buf);
+    memcpy(buf + cursor, ":", sizeof(char));
+    ++cursor;
+	
+	sprintf(buf  + cursor, "%d", packet -> size);
+    cursor = strlen(buf);
+    memcpy(buf + cursor, ":", sizeof(char));
+    ++cursor;
+	
+	sprintf(buf  + cursor, "%s", packet -> filename);
+    cursor = strlen(packet->filename);
+    memcpy(buf + cursor, ":", sizeof(char));
+    ++cursor;
+	
+	memcpy(buf + cursor, packet->filedata, sizeof(char)*DATA_SIZE);
 }
 
 // Using the information from the buffer, a packet is created
