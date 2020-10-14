@@ -153,7 +153,8 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
 
     char **packets = malloc(sizeof(char*) * fragmentAmt);
 
-    for (int num = 1; num <= fragmentAmt; num++) {
+
+    for (int packet_num = 1; packet_num <= fragmentAmt; packet_num++) {
 
         Packet packet;
 
@@ -162,10 +163,10 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         fread((void*)packet.filedata, sizeof(char), 1000, file);
 
         packet.total_frag = fragmentAmt;
-        packet.frag_no = num;
+        packet.frag_no = packet_num;
         packet.filename = filename;
 
-        if (num != fragmentAmt) {
+        if (packet_num != fragmentAmt) {
             packet.size = 1000;
         }
         else {
@@ -174,6 +175,8 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
 
         }
 
+        packets[packet_num - 1] = malloc(BUFFER_SIZE * sizeof(char));
+        packetToString(packets[packet_num - 1], &packet);
 
         
     }
@@ -204,8 +207,10 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         
         printf("hello %s\n", packets[packet_num - 1]);
 
-        numbytes = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0 , (struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
+        numbytes = sendto(socketFD, packets[packet_num - 1], sizeof(packets[packet_num - 1]), 0, (struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
         
+        printf("hello \n");
+
         if(numbytes == -1) {
             printf("Error Sending Packet #%d\n", packet_num);
             exit(1);
