@@ -96,7 +96,7 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    buff[recv] = '/0';
+    buff[recv] = "/0";
 
     if (strcmp(buff, "yes") == 0 ) {
         
