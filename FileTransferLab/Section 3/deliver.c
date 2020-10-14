@@ -201,17 +201,21 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         int numbytes;       
         ++timesent;
 
+        numbytes = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo));
         
-        if((numbytes = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo))) == -1) {
-            printf("Sending Error for Packet #%d\n", packet_num);
+        if(numbytes == -1) {
+            printf("Error Sending Packet #%d\n", packet_num);
             exit(1);
         }
 
         
         memset(buff, 0, sizeof(char) * BUFFER_SIZE);
-        if((numbytes = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *) &serverinfo, &serverinfo_size)) == -1) {
+
+        numbytes = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *) &serverinfo, &serverinfo_size);
+
+        if (numbytes == -1) {
             
-            printf("Timeout or recvfrom error for ACK packet #%d, resending attempt #%d...\n", packet_num--, timesent);
+            printf("Timeout or recvfrom error for ACK packet #%d, resending attempt #%d...\n", --packet_num, timesent);
             if(timesent < ALIVE){
                 continue;
             }
