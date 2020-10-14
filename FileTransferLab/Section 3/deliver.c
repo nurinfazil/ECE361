@@ -201,17 +201,23 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         int numbytes;       
         ++timesent;
 
-        numbytes = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo));
+        
+        printf("hello %s\n", packets[packet_num - 1]);
+
+        numbytes = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0 , (struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
         
         if(numbytes == -1) {
             printf("Error Sending Packet #%d\n", packet_num);
             exit(1);
         }
 
-        
+        printf("Sendto Successful\n");
+
         memset(buff, 0, sizeof(char) * BUFFER_SIZE);
 
-        numbytes = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *) &serverinfo, &serverinfo_size);
+        socklen_t serversize = sizeof(serverinfo);
+
+        numbytes = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&serverinfo, &serversize);
 
         if (numbytes == -1) {
             
