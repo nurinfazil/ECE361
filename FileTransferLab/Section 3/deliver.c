@@ -108,7 +108,7 @@ int main(int argc, char **argv){
     }
 
 
-    //send_file(filename, socketFD, serverinfo);
+    send_file(filename, socketFD, serverinfo);
 
 
     // Close socket file descriptor 
@@ -189,7 +189,7 @@ void send_file(char * filename, int socketFD, struct addrinfo serverinfo) {
     socklen_t serverinfo_size = sizeof(serverinfo);
 
     Packet ack_packet;  
-    ack_packet.filename = (char *)malloc(BUF_SIZE * sizeof(char));
+    ack_packet.filename = (char *)malloc(100 * sizeof(char));
 
     for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
 
@@ -197,7 +197,7 @@ void send_file(char * filename, int socketFD, struct addrinfo serverinfo) {
         ++timesent;
 
         
-        if((numbytes = sendto(socketFD, packets[packet_num - 1], BUF_SIZE, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo))) == -1) {
+        if((numbytes = sendto(socketFD, packets[packet_num - 1], 100, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo))) == -1) {
             printf("Sending Error for Packet #%d\n", packet_num);
             exit(1);
         }
@@ -222,7 +222,8 @@ void send_file(char * filename, int socketFD, struct addrinfo serverinfo) {
         if(strcmp(ack_packet.filename, filename) == 0) {
             if(ack_packet.frag_no == packet_num) {
                 if(strcmp(ack_packet.filedata, "ACK") == 0) {
-                    // printf("ACK packet #%d received\n", packet_num);
+                    
+                    printf("ACK packet #%d received\n", packet_num);
                     timesent = 0;
                     continue;
                 }
