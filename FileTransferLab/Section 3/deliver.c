@@ -86,7 +86,7 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    char buff[100] = "\0";
+    char buff[BUFFER_SIZE] = "\0";
     socklen_t serversize = sizeof(serverinfo);
 
     int recv = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&serverinfo, &serversize );
@@ -149,11 +149,11 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
 
     printf("File produces %d packet/s\n", fragmentAmt);
 
-    char buff[100] = "/0";
+    char buff[BUFFER_SIZE] = "/0";
 
     char **packets = malloc(sizeof(char*) * fragmentAmt);
 
-    for (int i = 1; i <= fragmentAmt; i++) {
+    for (int num = 1; num <= fragmentAmt; num++) {
 
         Packet packet;
 
@@ -162,7 +162,7 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         fread((void*)packet.filedata, sizeof(char), 1000, file);
 
         packet.total_frag = fragmentAmt;
-        packet.frag_no = i;
+        packet.frag_no = num;
         packet.filename = filename;
 
         if (i != fragmentAmt) {
@@ -194,7 +194,7 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
     socklen_t serverinfo_size = sizeof(serverinfo);
 
     Packet ack_packet;  
-    ack_packet.filename = (char *)malloc(100 * sizeof(char));
+    ack_packet.filename = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
     for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
 
@@ -202,14 +202,14 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         ++timesent;
 
         
-        if((numbytes = sendto(socketFD, packets[packet_num - 1], 100, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo))) == -1) {
+        if((numbytes = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0 , (struct sockaddr *) &serverinfo, sizeof(serverinfo))) == -1) {
             printf("Sending Error for Packet #%d\n", packet_num);
             exit(1);
         }
 
         
-        memset(buff, 0, sizeof(char) * 100);
-        if((numbytes = recvfrom(socketFD, buff, 100, 0, (struct sockaddr *) &serverinfo, &serverinfo_size)) == -1) {
+        memset(buff, 0, sizeof(char) * BUFFER_SIZE);
+        if((numbytes = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *) &serverinfo, &serverinfo_size)) == -1) {
             
             printf("Timeout or recvfrom error for ACK packet #%d, resending attempt #%d...\n", packet_num--, timesent);
             if(timesent < ALIVE){
