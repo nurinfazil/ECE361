@@ -165,7 +165,7 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
         packet.frag_no = num;
         packet.filename = filename;
 
-        if (i != fragmentAmt) {
+        if (num != fragmentAmt) {
             packet.size = 1000;
         }
         else {
