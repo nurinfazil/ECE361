@@ -7,9 +7,14 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <time.h>
+
+#include "packet.h"
+
+#define ALIVE 6
 
 
-void send_file(char * filename, int socketFD, struct addrinfo serverinfo);
+void send_file(char * filename, int socketFD, struct addrinfo* serverinfo);
 
 
 
@@ -91,13 +96,13 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    buff[recv] = '\0';
+    buff[recv] = '/0';
 
     if (strcmp(buff, "yes") == 0 ) {
         
         // Stop time and print time here
-        endTime = clock(); 
-		printf("RTT = %f sec.\n", ((double) (endTime - startTime) / CLOCKS_PER_SEC)); 
+        //endTime = clock(); 
+		//printf("RTT = %f sec.\n", ((double) (endTime - startTime) / CLOCKS_PER_SEC)); 
         
         printf("A file transfer can start.\n");
 
@@ -127,7 +132,7 @@ return 0;
 
 
 
-void send_file(char * filename, int socketFD, struct addrinfo serverinfo) {
+void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
 
     FILE * file;
 
@@ -144,7 +149,7 @@ void send_file(char * filename, int socketFD, struct addrinfo serverinfo) {
 
     printf("File produces %d packet/s\n", fragmentAmt);
 
-    char buff[100] = '\0';
+    char buff[100] = "/0";
 
     char **packets = malloc(sizeof(char*) * fragmentAmt);
 
@@ -164,7 +169,7 @@ void send_file(char * filename, int socketFD, struct addrinfo serverinfo) {
             packet.size = 1000;
         }
         else {
-            fseek(fil, 0, SEEK_END);
+            fseek(file, 0, SEEK_END);
             packet.size = (ftell(file) - 1) % 1000 + 1;
 
         }
