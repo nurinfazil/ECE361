@@ -89,14 +89,16 @@ int main(int argc, char **argv){
     char buff[BUFFER_SIZE] = "\0";
     socklen_t serversize = sizeof(serverinfo);
 
-    int recv = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&serverinfo, &serversize );
+    struct addrinfo * new_serverinfo;
+
+    int recv = recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&new_serverinfo, &serversize );
     if (recv < 0) {
 
         printf("Receiving Server Message Error\n");
         exit(1);
     }
 
-    buff[recv] = "/0";
+    buff[recv] = "\0";
 
     if (strcmp(buff, "yes") == 0 ) {
         
@@ -113,7 +115,155 @@ int main(int argc, char **argv){
     }
 
 
-    send_file(filename, socketFD, serverinfo);
+    //send_file(filename, socketFD, serverinfo);
+
+
+
+
+
+
+
+
+
+
+    FILE * file;
+
+    file = fopen(filename, "r");
+
+    if (file == NULL) {
+        printf("Error Opening File");
+    }
+
+    fseek(file, 0, SEEK_END);
+
+    int fragmentAmt = (ftell(file) / 1000) + 1;
+    rewind(file);
+
+    printf("File produces %d packet/s\n", fragmentAmt);
+
+    //char buff[BUFFER_SIZE] = "/0";
+
+    char **packets = malloc(sizeof(char*) * fragmentAmt);
+
+
+    for (int packet_num = 1; packet_num <= fragmentAmt; packet_num++) {
+
+        Packet packet;
+
+        memset(packet.filedata, 0, sizeof(char) * (1000));
+        
+        fread((void*)packet.filedata, sizeof(char), 1000, file);
+
+        packet.total_frag = fragmentAmt;
+        packet.frag_no = packet_num;
+        packet.filename = filename;
+
+        if (packet_num != fragmentAmt) {
+            packet.size = 1000;
+        }
+        else {
+            fseek(file, 0, SEEK_END);
+            packet.size = (ftell(file) - 1) % 1000 + 1;
+
+        }
+
+        packets[packet_num - 1] = malloc(BUFFER_SIZE * sizeof(char));
+        packetToString(packets[packet_num - 1], &packet);
+
+        
+    }
+
+
+    struct timeval timeout;
+
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    if(setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
+        printf("Error with setsockopt\n");
+    } 
+
+
+
+    int timesent = 0;   
+    socklen_t serverinfo_size = sizeof(serverinfo);
+
+    Packet ack_packet;  
+    ack_packet.filename = (char *)malloc(BUFFER_SIZE * sizeof(char));
+
+    for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
+
+               
+        ++timesent;
+
+        
+        //printf("hello %s\n", packets[packet_num - 1]);
+
+        //int send = sendto(socketFD, packets[packet_num - 1], sizeof(packets[packet_num - 1]), 0, (struct sockaddr *) 0, 0);
+
+        int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);  
+        
+        //printf("hello \n");
+
+        if (send < 0) {
+            printf("Sending Error with Packet %d \n", packet_num);
+            exit(1);
+        } 
+        
+
+        printf("Sendto Successful\n");
+
+        memset(buff, 0, sizeof(char) * BUFFER_SIZE);
+
+        socklen_t serversize = sizeof(new_serverinfo);
+
+        int received = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&new_serverinfo, &serversize);
+
+        if (received == -1) {
+            
+            printf("Error receiving ACK packet #%d, trying to resend: attempt #%d...\n", --packet_num, timesent);
+            if(timesent < ALIVE){
+                continue;
+            }
+            else {
+                printf("Too many resends. File transfer terminated.\n");
+                exit(1);
+            }
+        }
+        
+        stringToPacket(buff, &ack_packet);
+        
+        // Check contents of ACK packets
+        if(strcmp(ack_packet.filename, filename) == 0) {
+            if(ack_packet.frag_no == packet_num) {
+                if(strcmp(ack_packet.filedata, "ACK") == 0) {
+                    
+                    printf("ACK packet #%d received\n", packet_num);
+                    timesent = 0;
+                    continue;
+                }
+            }
+        }
+
+        // Resend packet
+        printf("ACK packet #%d not received, trying to resend: attempt #%d...\n", packet_num, timesent);
+        --packet_num;
+
+    }
+    
+
+    // Free memory
+    for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
+        free(packets[packet_num - 1]);
+    }
+    free(packets);
+
+    free(ack_packet.filename);
+
+
+
+
+
 
 
     // Close socket file descriptor 
@@ -201,20 +351,21 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
 
     for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
 
-        int numbytes;       
+               
         ++timesent;
 
         
         printf("hello %s\n", packets[packet_num - 1]);
 
-        numbytes = sendto(socketFD, packets[packet_num - 1], sizeof(packets[packet_num - 1]), 0, (struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
+        int send = sendto(socketFD, packets[packet_num - 1], sizeof(packets[packet_num - 1]), 0, (struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
         
         printf("hello \n");
 
-        if(numbytes == -1) {
-            printf("Error Sending Packet #%d\n", packet_num);
+        if (send < 0) {
+            printf("Sending Packet %d \n", packet_num);
             exit(1);
-        }
+        } 
+
 
         printf("Sendto Successful\n");
 
@@ -222,9 +373,9 @@ void send_file(char * filename, int socketFD, struct addrinfo* serverinfo) {
 
         socklen_t serversize = sizeof(serverinfo);
 
-        numbytes = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&serverinfo, &serversize);
+        int received = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&serverinfo, &serversize);
 
-        if (numbytes == -1) {
+        if (received == -1) {
             
             printf("Timeout or recvfrom error for ACK packet #%d, resending attempt #%d...\n", --packet_num, timesent);
             if(timesent < ALIVE){

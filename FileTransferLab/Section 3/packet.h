@@ -36,7 +36,7 @@ void packetToString(char *buf, Packet *packet){
     ++cursor;
 	
 	sprintf(buf  + cursor, "%s", packet -> filename);
-    cursor = strlen(packet->filename);
+    cursor += strlen(packet->filename);
     memcpy(buf + cursor, ":", sizeof(char));
     ++cursor;
 	
