@@ -145,7 +145,6 @@ int main(int argc, char **argv){
     for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
 
         Packet packet;
-        int packet_num;
 
         memset(packet.filedata, 0, sizeof(char) * (1000));
         
