@@ -138,7 +138,6 @@ int main(int argc, char **argv){
 	struct timeval to; 
 	to.tv_sec = 1; 
 	to.tv_usec = 999999; 
-	
 	int retsockopt = setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&to, sizeof(to)); 
 	
 	if (retsockopt < 0) {

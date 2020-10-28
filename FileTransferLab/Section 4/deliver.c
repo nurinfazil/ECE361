@@ -174,7 +174,7 @@ int main(int argc, char **argv){
     struct timeval timeout;
 
     timeout.tv_sec = 0;
-    timeout.tv_usec = 9999999;
+    timeout.tv_usec = 999999;
 
     if(setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
         printf("setsockopt error\n");
@@ -200,21 +200,17 @@ int main(int argc, char **argv){
     bool timeoutConfirm;
 
     while (packet_num <= fragmentAmt) {
-        timeoutConfirm = false;
+        
+		timeoutConfirm = false;
         memset(buff, 0, sizeof(char) * BUFFER_SIZE);
         timeStart = clock();
+		
         
-        int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
-
+		int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
         if (send < 0) {
             printf("Error sending packet %d\n", packet_num);
             exit(1);
         }
-
-        
-    
-
-
 
         while (1) {
        
@@ -261,7 +257,6 @@ int main(int argc, char **argv){
             } else {
                 break;
             }
-
 
 
             // if(strcmp(ack_packet.filename, filename) == 0) {
