@@ -106,8 +106,7 @@ int main(int argc, char **argv){
         
         
 
-		//initialRTT = ((double) (endTime - startTime) / CLOCKS_PER_SEC);
-		//printf("RTT = %f sec.\n", initialRTT); 
+		
         
         printf("A file transfer can start.\n");
 
@@ -117,7 +116,7 @@ int main(int argc, char **argv){
         exit(1);
     }
 	
-	//initialRTT = ((double) (endTime - startTime) / CLOCKS_PER_SEC);
+	
     clock_t initialRTT = endTime - startTime;
 	printf("initial RTT: %lu usec\n", initialRTT);
 
@@ -218,17 +217,7 @@ int main(int argc, char **argv){
 
         while (1) {
        
-            // ++retry;
-
-            // int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);  
-        
-            // if (send < 0) {
-            //     printf("Packet Sending Error %d \n", packet_num);
-            //     exit(1);
-            // } 
-        
-
-            // printf("Send to Successful!\n");
+            
 
             memset(buff, 0, sizeof(char) * BUFFER_SIZE);
 
@@ -263,20 +252,7 @@ int main(int argc, char **argv){
             }
 
 
-            // if(strcmp(ack_packet.filename, filename) == 0) {
-            //     if(ack_packet.frag_no == packet_num) {
-            //         if(strcmp(ack_packet.filedata, "ACK") == 0) {
-                        
-            //             printf("ACK packet #%d received\n", packet_num);
-            //             retry = 0;
-            //             continue;
-            //         }
-            //     }
-            // }
-
-            // Resend packet
-            // printf("ACK packet #%d not received, trying to resend: attempt #%d...\n", packet_num, retry);
-            // --packet_num;
+            
 
         }
 
