@@ -187,6 +187,11 @@ int main(int argc, char **argv){
     Packet ack_packet;  
     ack_packet.filename = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
+
+
+
+
+
     // Section 4
 
     clock_t estimateRTT = 2 * initialRTT;
