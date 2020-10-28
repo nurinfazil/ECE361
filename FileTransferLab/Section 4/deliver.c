@@ -95,12 +95,16 @@ int main(int argc, char **argv){
     }
 
     buff[recv] = "\0";
-	double initialRTT;
+	//double initialRTT;
 
     if (strcmp(buff, "yes") == 0 ) {
         
         // Stop time and print time here
         endTime = clock(); 
+
+        
+        
+
 		//initialRTT = ((double) (endTime - startTime) / CLOCKS_PER_SEC);
 		//printf("RTT = %f sec.\n", initialRTT); 
         
@@ -113,6 +117,7 @@ int main(int argc, char **argv){
     }
 	
 	initialRTT = ((double) (endTime - startTime) / CLOCKS_PER_SEC);
+    //clock_t initialRTT = endTime - startTime;
 	printf("initial RTT: %lu usec\n", initialRTT);
 
     // Section 3
@@ -180,58 +185,133 @@ int main(int argc, char **argv){
     Packet ack_packet;  
     ack_packet.filename = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
-    for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
-       
-        ++retry;
+    // Section 4
 
-        int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);  
+    clock_t estimateRTT = 2 * initialRTT;
+    clock_t devRTT = initialRTT;
+    clock_t sampleRTT, dev;
+    clock_t timeStart, timeEnd;
+
+    int timesent = 0;
+    int numbytes;
+    int packet_num = 1;
+    bool timeout;
+
+    while (packet_num <= total_frag) {
+        istimeout = false;
+        memset(rec_buf, 0, sizeof(char) * BUFFER_SIZE);
+        timeStart = clock();
         
+        send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, &serv_addr, sizeof(serv_addr);
+
         if (send < 0) {
-            printf("Packet Sending Error %d \n", packet_num);
+            printf("Error sending packet %d\n", packet_num);
             exit(1);
-        } 
-        
-
-        printf("Send to Successful!\n");
-
-        memset(buff, 0, sizeof(char) * BUFFER_SIZE);
-
-        socklen_t serversize = sizeof(new_serverinfo);
-
-        int received = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&new_serverinfo, &serversize);
-
-        if (received == -1) {
-            
-            printf("Error receiving ACK packet #%d, trying to resend: attempt #%d...\n", --packet_num, retry);
-            if(retry < RUNS){
-                continue;
-            }
-            else {
-                printf("Too many resends. File transfer terminated.\n");
-                exit(1);
-            }
         }
+
         
-        stringToPacket(buff, &ack_packet);
+    
+
+
+
+        for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
+       
+            // ++retry;
+
+            // int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);  
         
-        // Check contents of ACK packets
-        if(strcmp(ack_packet.filename, filename) == 0) {
-            if(ack_packet.frag_no == packet_num) {
-                if(strcmp(ack_packet.filedata, "ACK") == 0) {
-                    
-                    printf("ACK packet #%d received\n", packet_num);
-                    retry = 0;
-                    continue;
+            // if (send < 0) {
+            //     printf("Packet Sending Error %d \n", packet_num);
+            //     exit(1);
+            // } 
+        
+
+            // printf("Send to Successful!\n");
+
+            memset(buff, 0, sizeof(char) * BUFFER_SIZE);
+
+            socklen_t serversize = sizeof(new_serverinfo);
+
+            int received = recvfrom(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&new_serverinfo, &serversize);
+
+            if (received == -1) {
+                
+                timesent++;
+
+                printf("Error receiving ACK packet #%d, trying to resend: attempt #%d...\n", packet_num, retry);
+                if(retry <= RUNS){
+                    istimeout = true;
+                    break;
+                } else {
+                    printf("Too many resends. File transfer terminated.\n");
+                    exit(1);
                 }
             }
+        
+            stringToPacket(buff, &ack_packet);
+            
+            // Check contents of ACK packets
+
+            if(ack_packet.frag_no != packet_num) {
+
+                printf("Not current ACK, packet dropped, still waiting...\n");
+                continue;
+            } else {
+                break;
+            }
+
+
+
+            // if(strcmp(ack_packet.filename, filename) == 0) {
+            //     if(ack_packet.frag_no == packet_num) {
+            //         if(strcmp(ack_packet.filedata, "ACK") == 0) {
+                        
+            //             printf("ACK packet #%d received\n", packet_num);
+            //             retry = 0;
+            //             continue;
+            //         }
+            //     }
+            // }
+
+            // Resend packet
+            // printf("ACK packet #%d not received, trying to resend: attempt #%d...\n", packet_num, retry);
+            // --packet_num;
+
         }
 
-        // Resend packet
-        printf("ACK packet #%d not received, trying to resend: attempt #%d...\n", packet_num, retry);
-        --packet_num;
+        timeEnd = clock();
 
+        sampleRTT = timeEnd - timeStart;
+        estimateRTT = 0.875 * ((double) estimateRTT) + (sampleRTT >> 3);
+        dev = (estimateRTT > sampleRTT) ? (estimateRTT - sampleRTT) : (sampleRTT - estimateRTT);
+        devRTT = 0.75 * ((double) devRTT) + (dev >> 2);
+        timeout.tv_usec = 20 * estimateRTT + (devRTT << 2);
+        
+        if(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
+            printf("setsockopt failed\n");
+        }
+
+        if (istimeout == false) {
+            packet_num++;
+            timesent = 0;
+        } else {
+            printf("Packet #%d timeout, timeout reset to:\t%d usec\n", packet_num, timeout.tv_usec);		
+        }
+	}
+
+	// send FIN message
+	Packet fin;
+	fin.total_frag = total_frag;
+	fin.frag_no = 0;
+	fin.size = DATA_SIZE;
+	fin.filename = filename;
+	strcpy(fin.filedata, "FIN");
+	packetToString(&fin, rec_buf);
+	
+    if((numbytes = sendto(sockfd, rec_buf, BUFFER_SIZE, 0, &serverinfo, sizeof(serverinfo))) == -1) {
+        fprintf(stderr, "sendto error for FIN message\n");
+        exit(1);
     }
-    
 
     // Free memory
     for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
