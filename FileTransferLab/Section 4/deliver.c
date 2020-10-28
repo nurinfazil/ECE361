@@ -96,7 +96,7 @@ int main(int argc, char **argv){
     }
 
     buff[recv] = "\0";
-	double initialRTT;
+	//double initialRTT;
 
     if (strcmp(buff, "yes") == 0 ) {
         
@@ -117,8 +117,8 @@ int main(int argc, char **argv){
         exit(1);
     }
 	
-	initialRTT = ((double) (endTime - startTime) / CLOCKS_PER_SEC);
-    //clock_t initialRTT = endTime - startTime;
+	//initialRTT = ((double) (endTime - startTime) / CLOCKS_PER_SEC);
+    clock_t initialRTT = endTime - startTime;
 	printf("initial RTT: %lu usec\n", initialRTT);
 
     // Section 3
