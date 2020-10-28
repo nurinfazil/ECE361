@@ -104,6 +104,7 @@ int main(int argc, char **argv){
 					isFragmentRecv[i] = false;			
 			}
 		}
+		
 		// Copy data into the new file
 		if (isFragmentRecv[packet.frag_no] == false){
 			int ret = fwrite(packet.filedata, sizeof(char), packet.size, file_ptr);
@@ -117,9 +118,6 @@ int main(int argc, char **argv){
 		// Set up acknowledgment to send back to client 
 		strcpy(packet.filedata, "ACK");
 		
-		// Following is for testing. The 6 lines commented above are the actual code
-//		char *test = "3:2:10:foobar.txt:lo World!\n";
-//		stringToPacket(test, &packet);
 
 		packetToString(buff, &packet);
 		
@@ -131,11 +129,44 @@ int main(int argc, char **argv){
 		
 		// If at the last fragment, break out of while loop
 		if (packet.frag_no == packet.total_frag){
-			printf("File transfer completed!\n");
 			break;
 		}
 		
 	}
+	
+	// waiting for FIN message before closing the connection 
+	struct timeval to; 
+	to.tv_sec = 1; 
+	to.tv_usec = 999999; 
+	
+	int retsockopt = setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&to, sizeof(to)); 
+	
+	if (retsockopt < 0) {
+        printf("Setsockopt failure\n");
+    }
+	
+	while (1){
+		if (recvfrom(socketFD, buff, sizeof(buff), 0, (struct sockaddr *)&clientaddr, &clientsize) == -1){
+			printf("Error when waiting for wait message. Might be timeout. Connection closed.\n"); 
+		} 
+		stringToPacket (buff, &packet);
+		if (strcmp(packet.filedata, "FIN") == 0) { 
+			printf("File transfer completed!\n");
+			break;
+		} else {
+			strcpy(packet.filedata, "ACK");
+            packetToString(buff, &packet);
+            if ((sendto(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&clientaddr, sizeof(clientaddr)) == -1)) {
+                printf("sending ACK error\n");
+                exit(1);
+            }
+		}
+		
+
+	
+	}
+		
+	
 	
 		
 	// Close socket file descriptor 
