@@ -194,19 +194,19 @@ int main(int argc, char **argv){
     clock_t sampleRTT, dev;
     clock_t timeStart, timeEnd;
 
-    int timesent = 0;
+    
     int numbytes;
     int packet_num = 1;
     bool timeoutConfirm;
 
     while (packet_num <= fragmentAmt) {
-        
-		timeoutConfirm = false;
+
+        timeoutConfirm = false;
         memset(buff, 0, sizeof(char) * BUFFER_SIZE);
         timeStart = clock();
-		
         
-		int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
+
+        int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
         if (send < 0) {
             printf("Error sending packet %d\n", packet_num);
             exit(1);
@@ -234,7 +234,7 @@ int main(int argc, char **argv){
 
             if (received == -1) {
                 
-                timesent++;
+                retry++;
 
                 printf("Error receiving ACK packet #%d, trying to resend: attempt #%d...\n", packet_num, retry);
                 if(retry <= RUNS){
@@ -290,7 +290,7 @@ int main(int argc, char **argv){
 
         if (timeoutConfirm == false) {
             packet_num++;
-            timesent = 0;
+            retry = 0;
         } else {
             printf("Packet #%d timeout, timeout reset to:\t%d usec\n", packet_num, timeout.tv_usec);		
         }
