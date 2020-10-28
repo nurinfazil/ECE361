@@ -96,17 +96,11 @@ int main(int argc, char **argv){
     }
 
     buff[recv] = "\0";
-	//double initialRTT;
 
     if (strcmp(buff, "yes") == 0 ) {
         
         // Stop time and print time here
-        endTime = clock(); 
-
-        
-        
-
-		
+        endTime = clock();
         
         printf("A file transfer can start.\n");
 
@@ -119,6 +113,8 @@ int main(int argc, char **argv){
 	
     clock_t initialRTT = endTime - startTime;
 	printf("initial RTT: %lu usec\n", initialRTT);
+
+
 
     // Section 3
 
@@ -187,9 +183,6 @@ int main(int argc, char **argv){
 
 
 
-
-
-
     // Section 4
 
     clock_t estimateRTT = 2 * initialRTT;
@@ -217,8 +210,6 @@ int main(int argc, char **argv){
 
         while (1) {
        
-            
-
             memset(buff, 0, sizeof(char) * BUFFER_SIZE);
 
             socklen_t serversize = sizeof(new_serverinfo);
@@ -250,8 +241,6 @@ int main(int argc, char **argv){
             } else {
                 break;
             }
-
-
             
 
         }
