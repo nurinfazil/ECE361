@@ -142,7 +142,7 @@ int main(int argc, char **argv){
     char **packets = malloc(sizeof(char*) * fragmentAmt);
 
 
-    while (1) {
+    for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
 
         Packet packet;
         int packet_num;
@@ -216,7 +216,7 @@ int main(int argc, char **argv){
 
 
 
-        for(int packet_num = 1; packet_num <= fragmentAmt; ++packet_num) {
+        while (1) {
        
             // ++retry;
 
