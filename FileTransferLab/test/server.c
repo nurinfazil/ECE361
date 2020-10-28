@@ -121,7 +121,9 @@ int main(int argc, char **argv){
 
 		packetToString(buff, &packet);
 		
-		int send = sendto(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&clientaddr, sizeof(clientaddr)); 
+		// !!!!! DONT SEND ACK SO CLIENT TIMES OUT !!!!!
+		// int send = sendto(socketFD, buff, BUFFER_SIZE, 0, (struct sockaddr *)&clientaddr, sizeof(clientaddr)); 
+		
 		if (send < 0){
 			printf("Sending No Confirmation Message Error\n"); 
 			exit(1);
