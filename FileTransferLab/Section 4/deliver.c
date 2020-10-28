@@ -308,7 +308,7 @@ int main(int argc, char **argv){
 	fin.size = DATA_SIZE;
 	fin.filename = filename;
 	strcpy(fin.filedata, "FIN");
-	packetToString(&fin, buff);
+	packetToString(buff, &fin);
 	
     if((numbytes = sendto(socketFD, buff, BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen)) == -1) {
         printf("sendto error for FIN message\n");
