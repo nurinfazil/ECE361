@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "packet.h"
 
@@ -95,7 +96,7 @@ int main(int argc, char **argv){
     }
 
     buff[recv] = "\0";
-	//double initialRTT;
+	double initialRTT;
 
     if (strcmp(buff, "yes") == 0 ) {
         
@@ -141,9 +142,10 @@ int main(int argc, char **argv){
     char **packets = malloc(sizeof(char*) * fragmentAmt);
 
 
-    for (int packet_num = 1; packet_num <= fragmentAmt; packet_num++) {
+    while (1) {
 
         Packet packet;
+        int packet_num;
 
         memset(packet.filedata, 0, sizeof(char) * (1000));
         
@@ -195,14 +197,14 @@ int main(int argc, char **argv){
     int timesent = 0;
     int numbytes;
     int packet_num = 1;
-    bool timeout;
+    bool timeoutConfirm;
 
-    while (packet_num <= total_frag) {
-        istimeout = false;
-        memset(rec_buf, 0, sizeof(char) * BUFFER_SIZE);
+    while (packet_num <= fragmentAmt) {
+        timeoutConfirm = false;
+        memset(buff, 0, sizeof(char) * BUFFER_SIZE);
         timeStart = clock();
         
-        send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, &serv_addr, sizeof(serv_addr);
+        int send = sendto(socketFD, packets[packet_num - 1], BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen);
 
         if (send < 0) {
             printf("Error sending packet %d\n", packet_num);
@@ -240,7 +242,7 @@ int main(int argc, char **argv){
 
                 printf("Error receiving ACK packet #%d, trying to resend: attempt #%d...\n", packet_num, retry);
                 if(retry <= RUNS){
-                    istimeout = true;
+                    timeoutConfirm = true;
                     break;
                 } else {
                     printf("Too many resends. File transfer terminated.\n");
@@ -287,11 +289,11 @@ int main(int argc, char **argv){
         devRTT = 0.75 * ((double) devRTT) + (dev >> 2);
         timeout.tv_usec = 20 * estimateRTT + (devRTT << 2);
         
-        if(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
+        if(setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
             printf("setsockopt failed\n");
         }
 
-        if (istimeout == false) {
+        if (timeoutConfirm == false) {
             packet_num++;
             timesent = 0;
         } else {
@@ -301,15 +303,15 @@ int main(int argc, char **argv){
 
 	// send FIN message
 	Packet fin;
-	fin.total_frag = total_frag;
+	fin.total_frag = fragmentAmt;
 	fin.frag_no = 0;
 	fin.size = DATA_SIZE;
 	fin.filename = filename;
 	strcpy(fin.filedata, "FIN");
-	packetToString(&fin, rec_buf);
+	packetToString(&fin, buff);
 	
-    if((numbytes = sendto(sockfd, rec_buf, BUFFER_SIZE, 0, &serverinfo, sizeof(serverinfo))) == -1) {
-        fprintf(stderr, "sendto error for FIN message\n");
+    if((numbytes = sendto(socketFD, buff, BUFFER_SIZE, 0, (const struct sockaddr *) serverinfo->ai_addr, serverinfo->ai_addrlen)) == -1) {
+        printf("sendto error for FIN message\n");
         exit(1);
     }
 
